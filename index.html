@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0, shrink-to-fit=no">
+	<meta name="mobile-web-app-capable" content='yes'>
+	<meta charset="UTF-8">
+	<meta http-equiv="Expires" content="0">
+	<meta http-equiv="Last-Modified" content="0">
+	<meta http-equiv="Cache-Control" content="no-cache, mustrevalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<title>Squares</title>
+	<script type='text/javascript' src='https://jgomezpe.github.io/konekti/src/konekti.js'></script>
+	<script type='text/javascript' src='squares.js'></script>
+</head>
+
+<body>
+
+<script>
+
+Konekti.uses('header','navbar', 'canvas')
+
+
+// Main function using the Konekti infrastructure
+function KonektiMain(){
+	var client = new Environment()
+    client.setPlayers({
+        'rand1': new RandomPlayer(),
+        'rand2': new RandomPlayer()
+        // Add your agent here: for example if you create a class "MyAgent" and your team is "RexTeam" add something like
+        //'RexTeam': new MyAgent()
+        // You will be able to call it from the interface using the name of your team playing with red or yellow pieces
+        // If you want just to test this code, yo can use in the interface rand1 (red input) and rand2 (yellow input). 
+        // Size can be set to an integer number (size of the board) and time is given in seconds.
+    })
+
+	Konekti.header('title','', 'Squares', 3, {'class':'w3-black w3-center'} )
+	Konekti.raw('log','The winner is...')
+	// Connects the video with the HTML component
+	var btn2=[
+		{'plugin':'raw', 'setup':["time", '', {'tag':'input', 'width':'150px', 'class':"w3-bar-item w3-input w3-border w3-round-xlarge",
+			'placeholder':"&#xf252; Time (secs)", 'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
+			{'plugin':'raw', 'setup':["size", '', {'tag':'input', 'width':'150px', 'class':"w3-bar-item w3-input w3-border w3-round-xlarge",
+			'placeholder':"&#xf00a; Size", 'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
+        {'plugin':'raw', 'setup':["R", '', {'tag':'input', 'width':'150px', 'class':"w3-bar-item w3-input w3-border w3-round-xlarge",
+			'placeholder':"&#xf111; Red", 'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
+        {'plugin':'raw', 'setup':["R_time", '&#xf252;  White', {'width':'150px', 'class':"w3-bar-item w3-input w3-border w3-round-xlarge",
+			'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
+        {'plugin':'raw', 'setup':["Y", '', {'tag':'input', 'width':'150px', 'class':"w3-bar-item w3-input w3-border w3-round-xlarge",
+			'placeholder':"&#xf10c; Yellow", 'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
+        {'plugin':'raw', 'setup':["Y_time", '&#xf252; Yellow', {'width':'150px', 'class':"w3-bar-item w3-input w3-border w3-round-xlarge",
+			'style':"margin-top:2px;margin-bottom:2px;font-family: FontAwesome, Arial, Verdana, sans-serif;"}]},
+		{'plugin':'btn', 'setup':["play","fa-play", '', null, {'title':'Cara', 'class':'w3-right'}]}
+	]		
+	Konekti.navbar('navbar2', btn2, {'client':'client', 'method':'play'}, {'class':'w3-black w3-medium'}) 
+   	// Connecting the canvas to the HTML component
+    var commands = custom_commands()
+	Konekti.canvas('canvas', {}, commands, {'width':'100%', 'height':'fit'} )
+
+}
+
+</script>
+
+</body>
+</html>
