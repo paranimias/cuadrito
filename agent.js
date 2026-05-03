@@ -206,6 +206,34 @@ class MCTAgent extends Agent {
     return 0.5;
   }
 
+  backpropagate(node, result) {
+    let currentNode = node;
+    while (currentNode !== null) {
+      currentNode.visits += 1;
+      currentNode.wins += result;
+      currentNode = currentNode.parent;
+    }
+  }
+
+  getBestUCTChild(node) {
+    let bestValue = -Infinity;
+    let bestChild = null;
+
+    let c = 1.41;
+
+    for (let child of node.children) {
+      if (child.visits === 0) return child;
+      let winRate = child.wins / child.visits;
+      let uctValue =
+        winRate + c * Math.sqrt(Math.log(node.visits) / child.visits);
+      if (uctValue > bestValue) {
+        bestValue = uctValue;
+        bestChild = child;
+      }
+    }
+    return bestChild;
+  }
+
   compute(board, time) {
     let safeMoves = this.calculateAllSafeMoves(board);
 
@@ -214,17 +242,41 @@ class MCTAgent extends Agent {
       return safeMoves[randomIndex];
     }
 
-    return this.getFallbackMove(board);
-  }
+    let startTime = Date.now();
 
-  getFallbackMove(board) {
-    for (let r = 0; r < this.size; r++) {
-      for (let c = 0; c < this.size; c++) {
-        for (let s = 0; s < 4; s++) {
-          if ((board[r][c] & (1 << s)) === 0) return [r, c, s];
-        }
+    let timeLimit = Math.floor(time * 0.15);
+    if (timeLimit < 100) timeLimit = 100;
+    if (timeLimit > time) timeLimit = time - 50;
+
+    let rootNode = new MCTSNode(null, null, board);
+    rootNode.untriedMoves = this.getAllValidMoves(board);
+
+    while (Date.now() - startTime < timeLimit) {
+      let node = rootNode;
+
+      while (node.untriedMoves.length === 0 && node.children.length > 0) {
+        node = this.getBestUCTChild(node);
+      }
+
+      if (node.untriedMoves.length > 0) {
+        node = this.expand(node);
+      }
+
+      let result = this.simulate(node.boardState);
+
+      this.backpropagate(node, result);
+    }
+
+    let bestChild = null;
+    let maxVisits = -1;
+
+    for (let child of rootNode.children) {
+      if (child.visits > maxVisits) {
+        maxVisits = child.visits;
+        bestChild = child;
       }
     }
-    return null;
+
+    return bestChild.move;
   }
 }
