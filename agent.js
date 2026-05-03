@@ -1,3 +1,17 @@
+//node struct
+class MCTSNode {
+  constructor(parent, move, boardState) {
+    this.parent = parent;
+    this.move = move;
+    this.boardState = boardState;
+    this.children = [];
+
+    this.wins = 0;
+    this.visits = 0;
+    this.untriedMoves = [];
+  }
+}
+
 class MCTAgent extends Agent {
   constructor() {
     super();
@@ -66,6 +80,130 @@ class MCTAgent extends Agent {
     }
 
     return safeMoves;
+  }
+
+  cloneBoard(board) {
+    return board.map((row) => [...row]);
+  }
+
+  getAllValidMoves(board) {
+    let validMoves = [];
+    for (let r = 0; r < this.size; r++) {
+      for (let c = 0; c < this.size; c++) {
+        if (board[r][c] < 0) continue;
+        for (let s = 0; s < 4; s++) {
+          if ((board[r][c] & (1 << s)) === 0) {
+            validMoves.push([r, c, s]);
+          }
+        }
+      }
+    }
+    return validMoves;
+  }
+
+  applyMoveBoard(board, row, col, side) {
+    let closedCount = 0;
+
+    board[row][col] |= 1 << side;
+
+    if (board[row][col] === 15) {
+      closedCount++;
+    }
+
+    let nRow = row,
+      nCol = col,
+      nSide = side;
+
+    if (side === 0) {
+      nRow--;
+      nSide = 2;
+    }
+    if (side === 1) {
+      nCol++;
+      nSide = 3;
+    }
+    if (side === 2) {
+      nRow++;
+      nSide = 0;
+    }
+    if (side === 3) {
+      nCol--;
+      nSide = 1;
+    }
+
+    if (nRow >= 0 && nRow < this.size && nCol >= 0 && nCol < this.size) {
+      board[nRow][nCol] |= 1 << nSide;
+
+      if (board[nRow][nCol] === 15) {
+        closedCount++;
+      }
+    }
+    return closedCount;
+  }
+
+  shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  expand(node) {
+    let move = node.untriedMoves.pop();
+    let nextBoard = this.cloneBoard(node.boardState);
+
+    this.applyMoveBoard(nextBoard, move[0], move[1], move[2]);
+
+    let childNode = new MCTSNode(node, move, nextBoard);
+    childNode.untriedMoves = this.getAllValidMoves(nextBoard);
+
+    node.children.push(childNode);
+    return childNode;
+  }
+
+  simulate(boardState) {
+    let board = this.cloneBoard(boardState);
+    let myScore = 0;
+    let enemyScore = 0;
+
+    let myColorValue = this.color == "R" ? -1 : -2;
+    let enemyColorValue = this.color == "R" ? -2 : -1;
+
+    for (let row = 0; row < this.size; row++) {
+      for (let col = 0; col < this.size; col++) {
+        if (board[row][col] === myColorValue) myScore++;
+        else if (board[row][col] === enemyColorValue) enemyScore++;
+      }
+    }
+
+    let availableMoves = this.getAllValidMoves(board);
+    this.shuffleArray(availableMoves);
+
+    let isMyTurn = true;
+
+    for (let i = 0; i < availableMoves.length; i++) {
+      let move = availableMoves[i];
+      let row = move[0],
+        col = move[1],
+        side = move[2];
+
+      if ((board[row][col] & (1 << side)) !== 0) {
+        continue;
+      }
+
+      let closedBoxes = this.applyMoveBoard(board, row, col, side);
+
+      if (closedBoxes > 0) {
+        if (isMyTurn) myScore += closedBoxes;
+        else enemyScore += closedBoxes;
+      } else {
+        isMyTurn = !isMyTurn;
+      }
+    }
+
+    if (myScore > enemyScore) return 1;
+    if (myScore < enemyScore) return 0;
+    return 0.5;
   }
 
   compute(board, time) {
